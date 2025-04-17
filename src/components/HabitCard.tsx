@@ -16,7 +16,7 @@ interface HabitCardProps {
   onArchive?: () => void;
   onUnarchive?: () => void;
   onDelete?: () => void;
-  onUpdateReminder?: (time: string, days: number[]) => void;
+  onUpdateReminder?: (time: string, days: number[]) => void; 
 }
 
 export default function HabitCard({ 
