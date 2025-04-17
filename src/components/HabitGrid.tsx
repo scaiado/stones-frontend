@@ -55,6 +55,14 @@ export default function HabitGrid({ days = 30, habitId }: { days: number, habitI
   }, []);
 
   const toggleDay = (index: number) => {
+    const dayDate = new Date(daysGrid[index].date);
+    const today = new Date();
+    
+    // Only allow toggling if the day is today or in the past
+    if (dayDate > today) {
+      return;
+    }
+
     setDaysGrid((prev) =>
       prev.map((day, i) =>
         i === index ? { ...day, completed: !day.completed } : day
