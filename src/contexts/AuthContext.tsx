@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth } from '@/lib/firebase';
 import {
   signInWithEmailAndPassword,
@@ -60,6 +60,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [timeoutWarning, setTimeoutWarning] = useState(false);
   const router = useRouter();
 
+  // Define signOut with useCallback to avoid dependency issues
+  const signOut = useCallback(async () => {
+    try {
+      await firebaseSignOut(auth);
+      setLastActivity(0);
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      throw error;
+    }
+  }, [router]);
+
   useEffect(() => {
     setLastActivity(Date.now());
   }, []);
@@ -114,13 +126,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const interval = setInterval(checkTimeout, 1000);
     return () => clearInterval(interval);
-  }, [user, lastActivity, timeoutWarning, router]);
+  }, [user, lastActivity, timeoutWarning, router, signOut]);
 
   const signIn = async (email: string, password: string) => {
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
       setLastActivity(Date.now());
-      return result;
     } catch (error) {
       console.error('Sign in error:', error);
       throw error;
@@ -135,22 +146,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (password.length < 6) {
         throw new Error('Password must be at least 6 characters long');
       }
-      const result = await createUserWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth, email, password);
       setLastActivity(Date.now());
-      return result;
     } catch (error) {
       console.error('Sign up error:', error);
-      throw error;
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-      setLastActivity(0);
-      router.push('/auth/login');
-    } catch (error) {
-      console.error('Sign out error:', error);
       throw error;
     }
   };

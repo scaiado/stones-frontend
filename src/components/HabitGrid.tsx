@@ -88,7 +88,7 @@ export default function HabitGrid({ days = 30, habitId }: { days: number, habitI
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [daysGrid, days]);
+  }, [daysGrid, days, calculateStreak]);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = direction === 'prev' ? subMonths(currentDate, 1) : addMonths(currentDate, 1);

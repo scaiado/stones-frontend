@@ -34,7 +34,7 @@ class ApiClient {
     }
   }
 
-  private async request(endpoint: string, options: RequestInit = {}) {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const headers = {
       'Content-Type': 'application/json',
       ...(this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {}),
@@ -49,10 +49,10 @@ class ApiClient {
     // Handle 401 errors by attempting to refresh the token
     if (response.status === 401 && this.refreshToken) {
       try {
-        const refreshResponse = await this.refreshToken();
+        const refreshResponse = await this.refreshAccessToken();
         if (refreshResponse) {
           // Retry the original request with the new token
-          return this.request(endpoint, options);
+          return this.request<T>(endpoint, options);
         }
       } catch (error) {
         this.logout();
@@ -61,11 +61,18 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'An error occurred');
+      const errorData = await response.json().catch(() => ({ error: 'An error occurred' }));
+      throw new Error(errorData.error || 'An error occurred');
     }
 
-    return response.json();
+    // If T is Response, return the response object directly
+    if (typeof Response !== 'undefined' && Response.prototype === Object.getPrototypeOf(Response.prototype).constructor.prototype) {
+      return response as unknown as T;
+    }
+
+    // Otherwise, parse the JSON and return the data
+    const data = await response.json();
+    return data as T;
   }
 
   private setTokens(accessToken: string, refreshToken: string) {
@@ -78,45 +85,47 @@ class ApiClient {
   private clearTokens() {
     this.accessToken = null;
     this.refreshToken = null;
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+    }
   }
 
   async login(data: LoginData): Promise<AuthResponse> {
-    const response = await this.request('/api/auth/login', {
+    const response = await this.request<Response>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    this.setTokens(response.access_token, response.refresh_token);
-    return response;
+    const authData = await response.json() as AuthResponse;
+    this.setTokens(authData.access_token, authData.refresh_token);
+    return authData;
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await this.request('/api/auth/register', {
+    const response = await this.request<Response>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    this.setTokens(response.access_token, response.refresh_token);
-    return response;
+    const authData = await response.json() as AuthResponse;
+    this.setTokens(authData.access_token, authData.refresh_token);
+    return authData;
   }
 
-  async refreshToken(): Promise<AuthResponse | null> {
+  async refreshAccessToken(): Promise<AuthResponse | null> {
     if (!this.refreshToken) return null;
 
-    const response = await this.request('/api/auth/refresh', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.refreshToken}`,
-      },
-    });
-
-    if (response.access_token) {
-      this.accessToken = response.access_token;
-      localStorage.setItem('accessToken', response.access_token);
-      return response;
+    try {
+      const response = await this.request<Response>('/auth/refresh', {
+        method: 'POST',
+        body: JSON.stringify({ refresh_token: this.refreshToken }),
+      });
+      const authData = await response.json() as AuthResponse;
+      this.setTokens(authData.access_token, authData.refresh_token);
+      return authData;
+    } catch (error) {
+      this.clearTokens();
+      return null;
     }
-
-    return null;
   }
 
   async getCurrentUser(): Promise<User> {
