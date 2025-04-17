@@ -1,0 +1,34 @@
+TODO List:
+
+Authentication & Route Protection:
+- [x] Integrate ProtectedRoute with layout or pages
+  - Added ProtectedRoute wrapper to dashboard and other protected pages
+  - Tested redirection behavior for all scenarios
+- [x] Implement error handling for authentication failures
+  - Added toast notifications for auth errors
+  - Created error boundary for auth-related crashes
+- [x] Add remember me functionality
+  - Implemented persistent session storage
+  - Added checkbox to login form
+- [x] Implement session timeout handling
+  - Added session expiry detection
+  - Show session timeout warning
+  - Added auto-logout functionality
+
+Next Authentication Features:
+- [ ] Add password reset functionality
+  - Create password reset form
+  - Implement email verification
+  - Add password strength requirements
+- [ ] Implement email verification
+  - Add email verification flow
+  - Create verification success/failure pages
+  - Add resend verification email option
+- [ ] Add social authentication options
+  - Implement Google OAuth
+  - Add GitHub authentication
+  - Support Apple Sign In
+- [ ] Create user profile management
+  - Add profile edit form
+  - Implement avatar upload
+  - Add account deletion option 
