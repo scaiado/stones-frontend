@@ -139,7 +139,7 @@ export default function HabitGrid({ days = 30, habitId }: { days: number, habitI
 
       {/* Weekday Headers */}
       <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 mb-1">
-        {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
+        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
           <span key={day}>{day}</span>
         ))}
       </div>

@@ -1,5 +1,6 @@
 import Layout from '@/components/Layout';
 import HabitList from '@/components/HabitList';
+import NotificationManager from '@/components/NotificationManager';
 
 export default function Page() {
   return (
@@ -13,6 +14,7 @@ export default function Page() {
         </div>
 
         <HabitList />
+        <NotificationManager habits={[]} />
       </div>
     </Layout>
   );
