@@ -1,6 +1,7 @@
 "use client";
 
 import HabitGrid from '@/components/HabitGrid';
+import { ArchiveBoxIcon, ArchiveBoxXMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface HabitCardProps {
   title: string;
@@ -8,10 +9,23 @@ interface HabitCardProps {
   icon: string;
   color: string;
   days?: number;
+  isArchived?: boolean;
   onArchive?: () => void;
+  onUnarchive?: () => void;
+  onDelete?: () => void;
 }
 
-export default function HabitCard({ title, description, icon, color, days = 30, onArchive }: HabitCardProps) {
+export default function HabitCard({ 
+  title, 
+  description, 
+  icon, 
+  color, 
+  days = 30, 
+  isArchived = false,
+  onArchive,
+  onUnarchive,
+  onDelete
+}: HabitCardProps) {
   // Create a unique ID for each habit based on its title
   const habitId = title.toLowerCase().replace(/\s+/g, '-');
 
@@ -27,17 +41,30 @@ export default function HabitCard({ title, description, icon, color, days = 30, 
             <p className="text-sm text-gray-400">{description}</p>
           </div>
         </div>
-        <button
-          onClick={onArchive}
-          className="h-8 w-8 rounded-full bg-gray-700/50 hover:bg-red-500/20 hover:text-red-500 flex items-center justify-center transition-colors text-gray-400"
-          title="Archive habit"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 6h18" />
-            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-          </svg>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={isArchived ? onUnarchive : onArchive}
+            className={`h-8 w-8 rounded-full bg-gray-700/50 flex items-center justify-center transition-colors text-gray-400 ${
+              isArchived 
+                ? 'hover:bg-blue-500/20 hover:text-blue-500' 
+                : 'hover:bg-red-500/20 hover:text-red-500'
+            }`}
+            title={isArchived ? "Unarchive habit" : "Archive habit"}
+          >
+            {isArchived ? (
+              <ArchiveBoxXMarkIcon className="h-4 w-4" />
+            ) : (
+              <ArchiveBoxIcon className="h-4 w-4" />
+            )}
+          </button>
+          <button
+            onClick={onDelete}
+            className="h-8 w-8 rounded-full bg-gray-700/50 hover:bg-red-500/20 hover:text-red-500 flex items-center justify-center transition-colors text-gray-400"
+            title="Delete habit"
+          >
+            <TrashIcon className="h-4 w-4" />
+          </button>
+        </div>
       </div>
       <HabitGrid days={days} habitId={habitId} />
     </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format, subDays, isToday, isFirstDayOfMonth, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import Confetti from 'react-confetti';
 
 type Day = {
   date: string;
@@ -21,6 +22,8 @@ const generateDaysForMonth = (date: Date): Day[] => {
 export default function HabitGrid({ days = 30, habitId }: { days: number, habitId: string }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [daysGrid, setDaysGrid] = useState<Day[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const storageKey = `habitGrid_${habitId}_${format(currentDate, 'yyyy-MM')}`;
 
   useEffect(() => {
@@ -37,6 +40,19 @@ export default function HabitGrid({ days = 30, habitId }: { days: number, habitI
       localStorage.setItem(storageKey, JSON.stringify(daysGrid));
     }
   }, [daysGrid, storageKey]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const toggleDay = (index: number) => {
     setDaysGrid((prev) =>
@@ -55,6 +71,17 @@ export default function HabitGrid({ days = 30, habitId }: { days: number, habitI
     return streak;
   };
 
+  useEffect(() => {
+    const streak = calculateStreak();
+    if (streak >= days) {
+      setShowConfetti(true);
+      const timer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [daysGrid, days]);
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = direction === 'prev' ? subMonths(currentDate, 1) : addMonths(currentDate, 1);
     setCurrentDate(newDate);
@@ -67,9 +94,28 @@ export default function HabitGrid({ days = 30, habitId }: { days: number, habitI
 
   // Calculate the starting day offset
   const startDayOffset = new Date(daysGrid[0].date).getDay();
+  const streak = calculateStreak();
 
   return (
-    <div>
+    <div className="relative">
+      {showConfetti && (
+        <div className="fixed inset-0">
+          <Confetti
+            width={windowSize.width}
+            height={windowSize.height}
+            recycle={false}
+            numberOfPieces={500}
+            gravity={0.3}
+          />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+            <div className="bg-green-500/20 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+              <h3 className="text-2xl font-bold text-white mb-2">Congratulations!</h3>
+              <p className="text-white">You've achieved your {days}-day streak goal!</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Month Header with Navigation */}
       <div className="flex justify-between items-center mb-2">
         <button 
@@ -136,7 +182,10 @@ export default function HabitGrid({ days = 30, habitId }: { days: number, habitI
 
       {/* Streak Counter */}
       <div className="mt-2 text-sm text-gray-400">
-        Current streak: <span className="font-medium text-gray-300">{calculateStreak()} days</span>
+        Current streak: <span className="font-medium text-gray-300">{streak} days</span>
+        {streak >= days && (
+          <span className="ml-2 text-green-400">🎯 Goal achieved!</span>
+        )}
       </div>
     </div>
   );

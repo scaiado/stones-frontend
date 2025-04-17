@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import HabitCard from './HabitCard';
 import NewHabitModal from './NewHabitModal';
+import ArchiveToggle from './ArchiveToggle';
 
 interface Habit {
   id: string;
@@ -56,6 +57,7 @@ export default function HabitList() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [archivedHabits, setArchivedHabits] = useState<Habit[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   // Load habits and archived habits from localStorage on mount
   useEffect(() => {
@@ -114,31 +116,83 @@ export default function HabitList() {
     });
   };
 
+  const handleArchiveToggle = (show: boolean) => {
+    setShowArchived(show);
+  };
+
+  const handleUnarchiveHabit = (habitId: string) => {
+    setArchivedHabits((prev) => {
+      const habitToUnarchive = prev.find((h) => h.id === habitId);
+      if (!habitToUnarchive) return prev;
+
+      // Add back to active habits
+      setHabits((active) => [
+        ...active,
+        { ...habitToUnarchive, archivedAt: undefined }
+      ]);
+
+      // Remove from archived habits
+      return prev.filter((h) => h.id !== habitId);
+    });
+  };
+
+  const handleDeleteHabit = (habitId: string) => {
+    if (showArchived) {
+      setArchivedHabits((prev) => prev.filter((h) => h.id !== habitId));
+    } else {
+      setHabits((prev) => prev.filter((h) => h.id !== habitId));
+    }
+  };
+
   return (
     <div>
+      {/* Archive Toggle */}
+      <div className="mb-4">
+        <ArchiveToggle onToggle={handleArchiveToggle} />
+      </div>
+
       {/* Add New Habit Button */}
-      <button 
-        className="w-full mb-4 p-4 rounded-lg bg-gray-800/50 hover:bg-gray-800/70 backdrop-blur-sm shadow-lg flex items-center justify-center gap-2 transition-colors group"
-        onClick={() => setIsModalOpen(true)}
-      >
-        <span className="h-8 w-8 rounded-full bg-gray-700 group-hover:bg-gray-600 flex items-center justify-center transition-colors">
-          <span className="text-xl font-semibold text-white">+</span>
-        </span>
-        <span className="text-gray-400 group-hover:text-gray-300">Add New Habit</span>
-      </button>
+      {!showArchived && (
+        <button 
+          className="w-full mb-4 p-4 rounded-lg bg-gray-800/50 hover:bg-gray-800/70 backdrop-blur-sm shadow-lg flex items-center justify-center gap-2 transition-colors group"
+          onClick={() => setIsModalOpen(true)}
+        >
+          <span className="h-8 w-8 rounded-full bg-gray-700 group-hover:bg-gray-600 flex items-center justify-center transition-colors">
+            <span className="text-xl font-semibold text-white">+</span>
+          </span>
+          <span className="text-gray-400 group-hover:text-gray-300">Add New Habit</span>
+        </button>
+      )}
 
       <div className="space-y-4">
-        {habits.map((habit) => (
-          <HabitCard
-            key={habit.id}
-            title={habit.title}
-            description={habit.description}
-            icon={habit.icon}
-            color={habit.color}
-            days={habit.days}
-            onArchive={() => handleArchiveHabit(habit.id)}
-          />
-        ))}
+        {showArchived ? (
+          archivedHabits.map((habit) => (
+            <HabitCard
+              key={habit.id}
+              title={habit.title}
+              description={habit.description}
+              icon={habit.icon}
+              color={habit.color}
+              days={habit.days}
+              isArchived={true}
+              onUnarchive={() => handleUnarchiveHabit(habit.id)}
+              onDelete={() => handleDeleteHabit(habit.id)}
+            />
+          ))
+        ) : (
+          habits.map((habit) => (
+            <HabitCard
+              key={habit.id}
+              title={habit.title}
+              description={habit.description}
+              icon={habit.icon}
+              color={habit.color}
+              days={habit.days}
+              onArchive={() => handleArchiveHabit(habit.id)}
+              onDelete={() => handleDeleteHabit(habit.id)}
+            />
+          ))
+        )}
       </div>
 
       <NewHabitModal
