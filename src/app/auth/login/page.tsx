@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from '@/contexts/ToastContext';
+import StoneIcon from '@/components/icons/StoneIcon';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -38,6 +39,9 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
+          <div className="flex justify-center">
+            <StoneIcon size={96} showText={true} className="drop-shadow-lg" />
+          </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Sign in to your account
           </h2>

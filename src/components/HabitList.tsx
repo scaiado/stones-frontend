@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import HabitCard from './HabitCard';
 import NewHabitModal from './NewHabitModal';
 import ArchiveToggle from './ArchiveToggle';
+import EditHabitModal from './EditHabitModal';
 
 // Add JSX namespace to fix element type errors
 import type { JSX } from 'react';
@@ -63,6 +64,14 @@ export default function HabitList({ habits, onHabitsChange }: HabitListProps) {
   const [archivedHabits, setArchivedHabits] = useState<Habit[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    color: string;
+    days: number;
+  } | null>(null);
 
   // Load archived habits from localStorage on mount
   React.useEffect(() => {
@@ -147,6 +156,49 @@ export default function HabitList({ habits, onHabitsChange }: HabitListProps) {
     );
   };
 
+  const handleUpdateHabit = (habitId: string, updatedHabit: {
+    title: string;
+    description: string;
+    icon: string;
+    color: string;
+    days: number;
+  }) => {
+    onHabitsChange(
+      habits.map(habit =>
+        habit.id === habitId
+          ? { ...habit, ...updatedHabit }
+          : habit
+      )
+    );
+  };
+
+  const handleStartEdit = (habitId: string) => {
+    const habit = habits.find(h => h.id === habitId);
+    if (habit) {
+      setEditingHabit({
+        id: habit.id,
+        title: habit.title,
+        description: habit.description,
+        icon: habit.icon,
+        color: habit.color,
+        days: habit.days || 30
+      });
+    }
+  };
+
+  const handleFinishEdit = (updatedHabit: {
+    title: string;
+    description: string;
+    icon: string;
+    color: string;
+    days: number;
+  }) => {
+    if (editingHabit) {
+      handleUpdateHabit(editingHabit.id, updatedHabit);
+    }
+    setEditingHabit(null);
+  };
+
   const clearAllData = () => {
     if (window.confirm('Are you sure you want to clear all habits data? This cannot be undone.')) {
       // Initialize with default habits
@@ -219,6 +271,7 @@ export default function HabitList({ habits, onHabitsChange }: HabitListProps) {
               onArchive={() => handleArchiveHabit(habit.id)}
               onDelete={() => handleDeleteHabit(habit.id)}
               onUpdateReminder={(time, days) => handleUpdateReminder(habit.id, time, days)}
+              onEdit={() => handleStartEdit(habit.id)}
             />
           ))
         )}
@@ -229,6 +282,15 @@ export default function HabitList({ habits, onHabitsChange }: HabitListProps) {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleAddHabit}
       />
+
+      {editingHabit && (
+        <EditHabitModal
+          isOpen={true}
+          onClose={() => setEditingHabit(null)}
+          onSubmit={handleFinishEdit}
+          initialHabit={editingHabit}
+        />
+      )}
     </div>
   );
 } 

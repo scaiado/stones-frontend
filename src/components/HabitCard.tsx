@@ -1,7 +1,7 @@
 "use client";
 
 import HabitGrid from '@/components/HabitGrid';
-import { ArchiveBoxIcon, ArchiveBoxXMarkIcon, TrashIcon, BellIcon, BellSlashIcon } from '@heroicons/react/24/outline';
+import { ArchiveBoxIcon, ArchiveBoxXMarkIcon, TrashIcon, BellIcon, BellSlashIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
 interface HabitCardProps {
@@ -16,7 +16,8 @@ interface HabitCardProps {
   onArchive?: () => void;
   onUnarchive?: () => void;
   onDelete?: () => void;
-  onUpdateReminder?: (time: string, days: number[]) => void; 
+  onUpdateReminder?: (time: string, days: number[]) => void;
+  onEdit?: () => void;
 }
 
 export default function HabitCard({ 
@@ -31,7 +32,8 @@ export default function HabitCard({
   onArchive,
   onUnarchive,
   onDelete,
-  onUpdateReminder
+  onUpdateReminder,
+  onEdit
 }: HabitCardProps) {
   const [showReminderSettings, setShowReminderSettings] = useState(false);
   const [time, setTime] = useState(reminderTime);
@@ -69,19 +71,28 @@ export default function HabitCard({
         </div>
         <div className="flex gap-2">
           {!isArchived && (
-            <button
-              onClick={() => setShowReminderSettings(!showReminderSettings)}
-              className={`h-8 w-8 rounded-full bg-gray-700/50 flex items-center justify-center transition-colors text-gray-400 ${
-                reminderTime ? 'hover:bg-yellow-500/20 hover:text-yellow-500' : 'hover:bg-gray-600/50'
-              }`}
-              title={reminderTime ? "Edit reminder" : "Add reminder"}
-            >
-              {reminderTime ? (
-                <BellIcon className="h-4 w-4" />
-              ) : (
-                <BellSlashIcon className="h-4 w-4" />
-              )}
-            </button>
+            <>
+              <button
+                onClick={onEdit}
+                className="h-8 w-8 rounded-full bg-gray-700/50 hover:bg-blue-500/20 hover:text-blue-500 flex items-center justify-center transition-colors text-gray-400"
+                title="Edit habit"
+              >
+                <PencilIcon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setShowReminderSettings(!showReminderSettings)}
+                className={`h-8 w-8 rounded-full bg-gray-700/50 flex items-center justify-center transition-colors text-gray-400 ${
+                  reminderTime ? 'hover:bg-yellow-500/20 hover:text-yellow-500' : 'hover:bg-gray-600/50'
+                }`}
+                title={reminderTime ? "Edit reminder" : "Add reminder"}
+              >
+                {reminderTime ? (
+                  <BellIcon className="h-4 w-4" />
+                ) : (
+                  <BellSlashIcon className="h-4 w-4" />
+                )}
+              </button>
+            </>
           )}
           <button
             onClick={isArchived ? onUnarchive : onArchive}
