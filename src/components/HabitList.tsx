@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import HabitCard from './HabitCard';
 import NewHabitModal from './NewHabitModal';
@@ -52,42 +52,21 @@ const defaultHabits: Omit<Habit, 'id'>[] = [
   }
 ];
 
-const STORAGE_KEY = 'stones-habits-v2';
 const ARCHIVE_STORAGE_KEY = 'stones-habits-archive-v2';
 
-export default function HabitList() {
-  const [habits, setHabits] = useState<Habit[]>([]);
+interface HabitListProps {
+  habits: Habit[];
+  onHabitsChange: (habits: Habit[]) => void;
+}
+
+export default function HabitList({ habits, onHabitsChange }: HabitListProps) {
   const [archivedHabits, setArchivedHabits] = useState<Habit[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
 
-  // Load habits and archived habits from localStorage on mount
-  useEffect(() => {
-    const storedHabits = localStorage.getItem(STORAGE_KEY);
+  // Load archived habits from localStorage on mount
+  React.useEffect(() => {
     const storedArchivedHabits = localStorage.getItem(ARCHIVE_STORAGE_KEY);
-
-    if (storedHabits) {
-      try {
-        const parsedHabits = JSON.parse(storedHabits);
-        setHabits(parsedHabits);
-      } catch (e) {
-        console.error('Error parsing stored habits:', e);
-        const initialHabits = defaultHabits.map(habit => ({
-          ...habit,
-          id: uuidv4()
-        }));
-        setHabits(initialHabits);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialHabits));
-      }
-    } else {
-      const initialHabits = defaultHabits.map(habit => ({
-        ...habit,
-        id: uuidv4()
-      }));
-      setHabits(initialHabits);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialHabits));
-    }
-
     if (storedArchivedHabits) {
       try {
         const parsedArchivedHabits = JSON.parse(storedArchivedHabits);
@@ -100,13 +79,8 @@ export default function HabitList() {
     }
   }, []);
 
-  // Save habits to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
-  }, [habits]);
-
   // Save archived habits to localStorage whenever they change
-  useEffect(() => {
+  React.useEffect(() => {
     localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(archivedHabits));
   }, [archivedHabits]);
 
@@ -115,7 +89,7 @@ export default function HabitList() {
       ...newHabit,
       id: uuidv4()
     };
-    setHabits(prev => [...prev, habit]);
+    onHabitsChange([...habits, habit]);
     setIsModalOpen(false);
   };
 
@@ -132,7 +106,7 @@ export default function HabitList() {
 
     // Update both states atomically
     setArchivedHabits(prev => [...prev, archivedHabit]);
-    setHabits(prev => prev.filter(h => h.id !== habitId));
+    onHabitsChange(habits.filter(h => h.id !== habitId));
   };
 
   const handleArchiveToggle = (show: boolean) => {
@@ -151,7 +125,7 @@ export default function HabitList() {
     };
 
     // Update both states atomically
-    setHabits(prev => [...prev, unarchivedHabit]);
+    onHabitsChange([...habits, unarchivedHabit]);
     setArchivedHabits(prev => prev.filter(h => h.id !== habitId));
   };
 
@@ -159,13 +133,13 @@ export default function HabitList() {
     if (showArchived) {
       setArchivedHabits(prev => prev.filter(h => h.id !== habitId));
     } else {
-      setHabits(prev => prev.filter(h => h.id !== habitId));
+      onHabitsChange(habits.filter(h => h.id !== habitId));
     }
   };
 
   const handleUpdateReminder = (habitId: string, time: string, days: number[]) => {
-    setHabits(prev =>
-      prev.map(habit =>
+    onHabitsChange(
+      habits.map(habit =>
         habit.id === habitId
           ? { ...habit, reminderTime: time, reminderDays: days }
           : habit
@@ -175,20 +149,16 @@ export default function HabitList() {
 
   const clearAllData = () => {
     if (window.confirm('Are you sure you want to clear all habits data? This cannot be undone.')) {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(ARCHIVE_STORAGE_KEY);
-      
       // Initialize with default habits
       const initialHabits = defaultHabits.map(habit => ({
         ...habit,
         id: uuidv4()
       }));
       
-      setHabits(initialHabits);
+      onHabitsChange(initialHabits);
       setArchivedHabits([]);
       
-      // Save initial state
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialHabits));
+      // Save archived state
       localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify([]));
     }
   };
